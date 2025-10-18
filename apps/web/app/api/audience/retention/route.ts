@@ -1,0 +1,27 @@
+import { NextRequest } from "next/server";
+
+import { buildResponseMeta, parseDashboardParams } from "@/lib/api/params";
+import { generateAudienceDataset } from "@/lib/mock-data/audience";
+import { DEFAULT_TIMEZONE } from "@/lib/utils/date";
+
+export async function GET(request: NextRequest) {
+  const state = parseDashboardParams(request);
+  const tz = request.nextUrl.searchParams.get("tz") ?? DEFAULT_TIMEZONE;
+  const dataset = generateAudienceDataset({
+    range: state.range,
+    groupBy: state.groupBy,
+    filters: state.filters,
+    compare: state.compare,
+  });
+
+  return Response.json({
+    meta: {
+      ...buildResponseMeta({ state, tz }),
+      metrics: {
+        retention_7d: dataset.sevenDayRetention,
+        retention_30d: dataset.thirtyDayRetention,
+      },
+    },
+    data: dataset.retention,
+  });
+}

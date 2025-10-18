@@ -1,0 +1,10 @@
+.DS_Store
+.env*
+node_modules
+package-lock.json
+yarn.lock
+.pnpm-home
+apps/web/node_modules
+apps/web/.next
+apps/web/out
+apps/web/.pnpm-home
