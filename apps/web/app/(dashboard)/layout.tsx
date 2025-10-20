@@ -11,7 +11,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <DashboardStateHydrator />
       </Suspense>
       <GlobalHeader />
-      <main className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-6 py-6">
+      <main className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
         {children}
       </main>
     </div>

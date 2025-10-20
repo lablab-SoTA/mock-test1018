@@ -40,6 +40,7 @@ export type RevenueSummary = {
   arppu: number;
   churn_rate: number;
   retention_rate: number;
+  payment_rate: number;
   deltas?: {
     vsPrev?: number;
     yoy?: number;
@@ -155,6 +156,19 @@ export type RevenueBreakdownResponse = {
 export type RevenueTransactionsResponse = {
   meta: ResponseMeta;
   rows: TransactionRow[];
+};
+
+export type TopPayerRow = {
+  user_id_hash: string;
+  total_revenue: number;
+  orders: number;
+  avg_order_value: number;
+  last_purchase_utc: string;
+};
+
+export type RevenueTopPayersResponse = {
+  meta: ResponseMeta;
+  data: TopPayerRow[];
 };
 
 export type AcquisitionFunnelResponse = {

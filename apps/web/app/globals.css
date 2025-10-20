@@ -79,36 +79,36 @@
 }
 
 .dark {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
+  --background: #060a0c;
+  --foreground: #eef8f9;
+  --card: #0f1618;
+  --card-foreground: #eef8f9;
+  --popover: #0f1618;
+  --popover-foreground: #eef8f9;
   --primary: #01d0d7;
-  --primary-foreground: #000000;
-  --secondary: #f0fbfb;
-  --secondary-foreground: #000000;
-  --muted: #f5f7f7;
-  --muted-foreground: #40585a;
-  --accent: #e2f9fb;
-  --accent-foreground: #000000;
-  --destructive: #e5484d;
-  --border: #d4e8e9;
-  --input: #d4e8e9;
+  --primary-foreground: #001a1c;
+  --secondary: #102428;
+  --secondary-foreground: #d2fdff;
+  --muted: #102428;
+  --muted-foreground: #7aa9ac;
+  --accent: #143941;
+  --accent-foreground: #d2fdff;
+  --destructive: #ff6f71;
+  --border: rgba(1, 208, 215, 0.35);
+  --input: rgba(1, 208, 215, 0.2);
   --ring: #01d0d7;
   --chart-1: 182 99% 42%;
-  --chart-2: 182 100% 28%;
-  --chart-3: 195 43% 12%;
-  --chart-4: 182 72% 62%;
-  --chart-5: 186 60% 24%;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #000000;
+  --chart-2: 182 82% 57%;
+  --chart-3: 182 67% 32%;
+  --chart-4: 195 42% 14%;
+  --chart-5: 182 85% 68%;
+  --sidebar: #0f1618;
+  --sidebar-foreground: #eef8f9;
   --sidebar-primary: #01d0d7;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #f0fbfb;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #d4e8e9;
+  --sidebar-primary-foreground: #001a1c;
+  --sidebar-accent: #143941;
+  --sidebar-accent-foreground: #d2fdff;
+  --sidebar-border: rgba(1, 208, 215, 0.35);
   --sidebar-ring: #01d0d7;
 }
 

@@ -190,7 +190,7 @@ export function AcquisitionDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label={t("acquisition.kpi.visitToView")}
           value={formatPercent(funnelData[1]?.conversion_rate ?? 0)}
@@ -213,7 +213,7 @@ export function AcquisitionDashboard() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <WidgetShell
           title={t("acquisition.funnel.title")}
           description={t("acquisition.funnel.description")}
@@ -275,7 +275,7 @@ export function AcquisitionDashboard() {
         </WidgetShell>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <WidgetShell
           title={t("acquisition.sources.title")}
           description={

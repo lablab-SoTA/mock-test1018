@@ -18,8 +18,15 @@ import { DateRangePicker } from "@/components/header/DateRangePicker";
 import { FilterBar } from "@/components/header/FilterBar";
 import { cn } from "@/lib/utils";
 import { useDashboardQuery } from "@/lib/hooks/use-dashboard-query";
-import { buildCsv, downloadCsvBundle, notifyCsvError } from "@/lib/csv";
+import { buildCsv, downloadCsvBundle, notifyCsvError, type CsvColumn } from "@/lib/csv";
 import { getJson } from "@/lib/api/client";
+import {
+  type RevenueBreakdownResponse,
+  type RevenueSummaryResponse,
+  type RevenueTopPayersResponse,
+  type RevenueTransactionsResponse,
+  type TransactionRow,
+} from "@/lib/types";
 import { useTranslation, type TranslationKey, type Locale } from "@/lib/hooks/use-translation";
 
 const TABS = [
@@ -28,6 +35,23 @@ const TABS = [
   { labelKey: "tab.content", href: "/content" },
   { labelKey: "tab.audience", href: "/audience" },
 ] satisfies Array<{ labelKey: TranslationKey; href: string }>;
+
+const TRANSACTION_EXPORT_COLUMNS: CsvColumn<TransactionRow>[] = [
+  { key: "transaction_id", header: "transaction_id" },
+  { key: "paid_at_utc", header: "paid_at_utc" },
+  { key: "user_id_hash", header: "user_id_hash" },
+  { key: "content_id", header: "content_id" },
+  { key: "product_type", header: "product_type" },
+  { key: "amount", header: "amount", transform: (value) => Number(value) },
+  { key: "currency", header: "currency" },
+  { key: "tax", header: "tax", transform: (value) => Number(value) },
+  { key: "discount", header: "discount", transform: (value) => Number(value) },
+  { key: "status", header: "status" },
+  { key: "source", header: "source" },
+  { key: "platform", header: "platform" },
+  { key: "device", header: "device" },
+  { key: "country", header: "country" },
+];
 
 export function GlobalHeader() {
   const pathname = usePathname();
@@ -58,21 +82,21 @@ export function GlobalHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-[240px]">
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex-1 md:flex-none">
             <Tabs value={resolveTabValue(pathname)} className="w-full">
-              <TabsList className="flex h-10 flex-wrap justify-start gap-2 bg-transparent p-0">
+              <TabsList className="flex h-10 items-center gap-2 overflow-x-auto rounded-full bg-muted/40 p-1">
                 {TABS.map((tab) => (
                   <TabsTrigger
                     key={tab.href}
                     value={tab.href}
                     asChild
                     className={cn(
-                      "rounded-full border px-4 py-2 text-sm font-medium",
+                      "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium",
                       resolveTabValue(pathname) === tab.href
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-transparent bg-secondary text-secondary-foreground hover:border-border",
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-transparent text-muted-foreground hover:bg-muted",
                     )}
                   >
                     <Link href={tab.href}>{t(tab.labelKey)}</Link>
@@ -81,9 +105,9 @@ export function GlobalHeader() {
               </TabsList>
             </Tabs>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end md:w-auto">
             <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-              <SelectTrigger className="h-10 w-[150px] gap-2" aria-label={t("language.label")}>
+              <SelectTrigger className="h-10 w-full gap-2 sm:w-[150px]" aria-label={t("language.label")}>
                 <Globe className="size-4" aria-hidden="true" />
                 <SelectValue placeholder={t("language.label")} />
               </SelectTrigger>
@@ -95,12 +119,18 @@ export function GlobalHeader() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" className="h-10 gap-2" onClick={handleExport} disabled={isExporting} aria-busy={isExporting}>
+            <Button
+              variant="outline"
+              className="h-10 w-full gap-2 sm:w-auto"
+              onClick={handleExport}
+              disabled={isExporting}
+              aria-busy={isExporting}
+            >
               <Download className="size-4" aria-hidden="true" /> {isExporting ? t("header.exporting") : t("header.export")}
             </Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
           <DateRangePicker />
           <FilterBar />
         </div>
@@ -116,10 +146,11 @@ function resolveTabValue(pathname: string) {
 }
 
 async function exportRevenue(queryString: string) {
-  const [summary, breakdown, transactions] = await Promise.all([
-    getJson<{ data: { gross: number; net: number; orders: number; paying_users: number; arppu: number; churn_rate: number } }>(`/api/revenue/summary?${queryString}`),
-    getJson<{ data: Array<{ label: string; revenue: number; share: number }> }>(`/api/revenue/breakdown?${queryString}`),
-    getJson<{ rows: Record<string, unknown>[] }>(`/api/revenue/transactions?${queryString}`),
+  const [summary, breakdown, transactions, topPayers] = await Promise.all([
+    getJson<RevenueSummaryResponse>(`/api/revenue/summary?${queryString}`),
+    getJson<RevenueBreakdownResponse>(`/api/revenue/breakdown?${queryString}`),
+    getJson<RevenueTransactionsResponse>(`/api/revenue/transactions?${queryString}`),
+    getJson<RevenueTopPayersResponse>(`/api/revenue/top-payers?${queryString}`),
   ]);
 
   const files = [
@@ -131,7 +162,9 @@ async function exportRevenue(queryString: string) {
         { key: "orders", header: "orders" },
         { key: "paying_users", header: "paying_users" },
         { key: "arppu", header: "arppu" },
+        { key: "payment_rate", header: "payment_rate" },
         { key: "churn_rate", header: "churn_rate" },
+        { key: "retention_rate", header: "retention_rate" },
       ]),
     },
     {
@@ -144,7 +177,17 @@ async function exportRevenue(queryString: string) {
     },
     {
       filename: "transactions.csv",
-      csv: buildCsv(transactions.rows, Object.keys(transactions.rows[0] ?? {}).map((key) => ({ key, header: key }))),
+      csv: buildCsv(transactions.rows, TRANSACTION_EXPORT_COLUMNS),
+    },
+    {
+      filename: "top_payers.csv",
+      csv: buildCsv(topPayers.data, [
+        { key: "user_id_hash", header: "user_id_hash" },
+        { key: "total_revenue", header: "total_revenue" },
+        { key: "orders", header: "orders" },
+        { key: "avg_order_value", header: "avg_order_value" },
+        { key: "last_purchase_utc", header: "last_purchase_utc" },
+      ]),
     },
   ];
 

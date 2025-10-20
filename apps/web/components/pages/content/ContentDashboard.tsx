@@ -181,7 +181,7 @@ export function ContentDashboard() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label={t("content.kpi.topRevenue")}
             value={formatCurrency(topQuery.data?.data[0]?.revenue ?? 0, { decimals: true })}
@@ -195,7 +195,7 @@ export function ContentDashboard() {
           <KpiCard label={t("content.kpi.engagement")} value={formatPercent(totals.engagement)} />
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <WidgetShell
             title={t("content.performance.title")}
             description={t("content.performance.description")}
@@ -238,7 +238,7 @@ export function ContentDashboard() {
           </WidgetShell>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+        <section className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
           <WidgetShell
             title={t("content.watch.title")}
             actions={<WidgetMenu onDownloadCsv={exportWatchTime} onToggleTable={() => setWatchAsTable((prev) => !prev)} />}
@@ -276,7 +276,7 @@ export function ContentDashboard() {
       </div>
 
       <Sheet open={Boolean(selectedContent)} onOpenChange={(open) => !open && setSelectedContent(null)}>
-        <SheetContent className="max-w-lg overflow-y-auto">
+        <SheetContent className="w-full max-w-full overflow-y-auto sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>{selectedContent?.title}</SheetTitle>
             <SheetDescription>{selectedContent?.creator_segment}</SheetDescription>

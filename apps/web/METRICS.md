@@ -11,6 +11,7 @@ All metrics are computed on the mock API layer (`lib/calc.ts`, `lib/utils/revenu
 | Orders | Count of paid transactions. |
 | Paying users | Unique users with ≥1 paid transaction in the range. |
 | ARPPU | `gross ÷ paying_users`. Rounded to 2 decimals. |
+| Payment rate | `paying_users ÷ active_audience` (derived baseline per range). |
 | Subscription churn | `cancellations ÷ subscribers_at_start`. Deterministic baseline per query. |
 | Retention | `1 - churn_rate`. |
 

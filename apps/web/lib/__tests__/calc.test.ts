@@ -4,6 +4,7 @@ import {
   breakdownByProduct,
   calculateArppu,
   calculateChurnRate,
+  calculatePaymentRate,
   calculateFunnelStages,
   calculateRetentionRate,
   delta,
@@ -60,6 +61,11 @@ describe("calc utilities", () => {
     const churn = calculateChurnRate(25, 500);
     expect(churn).toBeCloseTo(0.05, 2);
     expect(calculateRetentionRate(churn)).toBeCloseTo(0.95, 2);
+  });
+
+  it("calculates payment rate", () => {
+    expect(calculatePaymentRate(250, 1000)).toBeCloseTo(0.25, 2);
+    expect(calculatePaymentRate(0, 0)).toBe(0);
   });
 
   it("handles safe division", () => {

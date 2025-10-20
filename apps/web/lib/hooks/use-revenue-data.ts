@@ -7,6 +7,7 @@ import { useDashboardQuery } from "@/lib/hooks/use-dashboard-query";
 import type {
   RevenueBreakdownResponse,
   RevenueSummaryResponse,
+  RevenueTopPayersResponse,
   RevenueTransactionsResponse,
 } from "@/lib/types";
 
@@ -32,5 +33,13 @@ export function useRevenueTransactions() {
     queryKey,
     queryFn: () => getJson<RevenueTransactionsResponse>(`/api/revenue/transactions?${queryString}`),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useRevenueTopPayers() {
+  const { queryKey, queryString } = useDashboardQuery("revenue-top-payers");
+  return useQuery({
+    queryKey,
+    queryFn: () => getJson<RevenueTopPayersResponse>(`/api/revenue/top-payers?${queryString}`),
   });
 }

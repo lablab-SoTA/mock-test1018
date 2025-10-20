@@ -38,6 +38,10 @@ export function calculateConversionRate(numerator: number, denominator: number) 
   return safeDivide(numerator, denominator, 4);
 }
 
+export function calculatePaymentRate(payingUsers: number, audienceSize: number) {
+  return safeDivide(payingUsers, audienceSize, 4);
+}
+
 export function calculateFunnelStages({
   visits,
   freeViews,

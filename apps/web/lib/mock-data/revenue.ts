@@ -2,11 +2,13 @@ import {
   breakdownByProduct,
   calculateArppu,
   calculateChurnRate,
+  calculatePaymentRate,
   calculateRetentionRate,
   grossRevenueFromTransactions,
   netRevenueFromTransactions,
   ordersFromTransactions,
   payingUsersFromTransactions,
+  safeDivide,
 } from "@/lib/calc";
 import type {
   DashboardFilters,
@@ -14,14 +16,20 @@ import type {
   ProductType,
   RevenueBreakdownItem,
   RevenueSummary,
+  TopPayerRow,
   TransactionRow,
 } from "@/lib/types";
 import { createMockContext, randomBetween, randomInt, randomTimeWithinBucket } from "./common";
 
 type RevenueDataset = {
   transactions: TransactionRow[];
-  summary: RevenueSummary & { subscribers_at_start: number; cancellations: number };
+  summary: RevenueSummary & {
+    subscribers_at_start: number;
+    cancellations: number;
+    audience_size: number;
+  };
   breakdown: RevenueBreakdownItem[];
+  topPayers: TopPayerRow[];
 };
 
 const PRODUCT_PRICING: Record<ProductType, { min: number; max: number }> = {
@@ -50,11 +58,13 @@ export function generateRevenueDataset({
   const ctx = createMockContext({ domain: `${seedKey}`, range, groupBy, filters, compare });
   const transactions = buildTransactions(ctx);
   const { summary, breakdown } = buildAggregations(ctx, transactions);
+  const topPayers = buildTopPayers(transactions);
 
   return {
     transactions,
     summary,
     breakdown,
+    topPayers,
   } as RevenueDataset;
 }
 
@@ -125,6 +135,9 @@ function buildAggregations(ctx: ReturnType<typeof createMockContext>, transactio
 
   const churnRate = calculateChurnRate(cancellations, baselineSubscribers);
   const retentionRate = calculateRetentionRate(churnRate);
+  const impliedPaymentRate = Math.max(0.1, Math.min(0.32, randomBetween(0.14, 0.26, ctx.random)));
+  const audienceSize = Math.max(payingUsers, Math.round(payingUsers / impliedPaymentRate));
+  const paymentRate = calculatePaymentRate(payingUsers, audienceSize);
 
   const breakdownTotals = breakdownByProduct(transactions);
   const breakdown: RevenueBreakdownItem[] = (Object.keys(breakdownTotals) as ProductType[]).map((label) => ({
@@ -133,7 +146,11 @@ function buildAggregations(ctx: ReturnType<typeof createMockContext>, transactio
     share: breakdownTotals[label] === 0 ? 0 : breakdownTotals[label] / gross,
   }));
 
-  const summary: RevenueSummary & { subscribers_at_start: number; cancellations: number } = {
+  const summary: RevenueSummary & {
+    subscribers_at_start: number;
+    cancellations: number;
+    audience_size: number;
+  } = {
     gross: Math.round(gross),
     net: Math.round(net),
     orders,
@@ -141,11 +158,50 @@ function buildAggregations(ctx: ReturnType<typeof createMockContext>, transactio
     arppu: calculateArppu(gross, payingUsers),
     churn_rate: churnRate,
     retention_rate: retentionRate,
+    payment_rate: paymentRate,
     subscribers_at_start: baselineSubscribers,
     cancellations,
+    audience_size: audienceSize,
   };
 
   return { summary, breakdown };
+}
+
+function buildTopPayers(transactions: TransactionRow[]): TopPayerRow[] {
+  const aggregates = new Map<
+    string,
+    { revenue: number; orders: number; lastPurchaseUtc: string }
+  >();
+
+  transactions.forEach((tx) => {
+    if (tx.status !== "paid") return;
+    const existing = aggregates.get(tx.user_id_hash) ?? { revenue: 0, orders: 0, lastPurchaseUtc: tx.paid_at_utc };
+    const nextRevenue = existing.revenue + tx.amount;
+    const nextOrders = existing.orders + 1;
+    const nextLast =
+      tx.paid_at_utc > existing.lastPurchaseUtc ? tx.paid_at_utc : existing.lastPurchaseUtc;
+    aggregates.set(tx.user_id_hash, {
+      revenue: nextRevenue,
+      orders: nextOrders,
+      lastPurchaseUtc: nextLast,
+    });
+  });
+
+  return Array.from(aggregates.entries())
+    .map<TopPayerRow>(([user_id_hash, value]) => ({
+      user_id_hash,
+      total_revenue: Math.round(value.revenue),
+      orders: value.orders,
+      avg_order_value: Math.round(safeDivide(value.revenue, value.orders)),
+      last_purchase_utc: value.lastPurchaseUtc,
+    }))
+    .sort((a, b) => {
+      if (b.total_revenue === a.total_revenue) {
+        return b.last_purchase_utc.localeCompare(a.last_purchase_utc);
+      }
+      return b.total_revenue - a.total_revenue;
+    })
+    .slice(0, 10);
 }
 
 function pickSourceByProduct(product: ProductType, random: () => number) {

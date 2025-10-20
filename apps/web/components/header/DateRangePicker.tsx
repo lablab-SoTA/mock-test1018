@@ -102,7 +102,7 @@ export function DateRangePicker() {
         <Button
           variant="outline"
           size="lg"
-          className="min-w-[240px] justify-start gap-2"
+          className="w-full justify-start gap-2 sm:min-w-[240px]"
           aria-label={t("date.selectedRange", { range: label })}
         >
           <span className="text-left">

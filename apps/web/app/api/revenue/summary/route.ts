@@ -33,9 +33,15 @@ export async function GET(request: NextRequest) {
     };
   }
 
-  const { subscribers_at_start: ignoredSubscribers, cancellations: ignoredCancellations, ...payload } = summary;
+  const {
+    subscribers_at_start: ignoredSubscribers,
+    cancellations: ignoredCancellations,
+    audience_size: ignoredAudience,
+    ...payload
+  } = summary;
   void ignoredSubscribers;
   void ignoredCancellations;
+  void ignoredAudience;
 
   return Response.json({
     meta: buildResponseMeta({ state, tz }),

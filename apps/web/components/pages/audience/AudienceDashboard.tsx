@@ -92,7 +92,7 @@ export function AudienceDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label={t("audience.kpi.active")}
           value={formatNumber(realtime?.active_users ?? 0)}
         />
@@ -110,7 +110,7 @@ export function AudienceDashboard() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <section className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <WidgetShell
           title={t("audience.followers.title")}
           actions={<WidgetMenu onDownloadCsv={exportFollowers} onToggleTable={() => setFollowersAsTable((prev) => !prev)} />}
@@ -168,10 +168,10 @@ export function AudienceDashboard() {
 
       <section>
         <WidgetShell title={t("audience.realtime.title")} description={t("audience.realtime.description")}>
-          <div className="text-3xl font-semibold">
+          <div className="text-center text-3xl font-semibold sm:text-left">
             {formatNumber(realtime?.active_users ?? 0)} {t("audience.realtime.usersOnline")}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground sm:text-left">
             {t("audience.realtime.lastUpdated", {
               time: realtime?.polled_at ? new Date(realtime.polled_at).toLocaleTimeString(localeCode) : "--",
             })}

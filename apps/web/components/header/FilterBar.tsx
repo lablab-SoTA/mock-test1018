@@ -48,7 +48,7 @@ export function FilterBar() {
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-label={t("filter.aria")}>
+    <div className="flex w-full flex-wrap items-center gap-2" aria-label={t("filter.aria")}>
       <Badge variant="secondary" className="h-9 gap-1 px-3 text-sm">
         <Filter className="size-4" aria-hidden="true" /> {t("header.filters")}
       </Badge>

@@ -12,7 +12,9 @@ CSV files are generated on demand through widget menus or via the tab-level "Exp
 | orders | Paid order count |
 | paying_users | Unique paying users |
 | arppu | Average revenue per paying user |
+| payment_rate | Paying users divided by active audience |
 | churn_rate | Subscription churn rate |
+| retention_rate | Subscriber retention rate |
 
 ### revenue_breakdown.csv
 | Column | Description |
@@ -23,6 +25,15 @@ CSV files are generated on demand through widget menus or via the tab-level "Exp
 
 ### transactions.csv
 Mirrors `TransactionRow` fields (`transaction_id`, `paid_at_utc`, `user_id_hash`, `product_type`, `amount`, `tax`, `discount`, `status`, `source`, `platform`, `device`, `country`).
+
+### top_payers.csv
+| Column | Description |
+| ------ | ----------- |
+| user_id_hash | Obfuscated user identifier |
+| total_revenue | Total paid revenue attributed to the user |
+| orders | Paid order count |
+| avg_order_value | Average revenue per paid order |
+| last_purchase_utc | Timestamp of the most recent paid order |
 
 ## Acquisition
 

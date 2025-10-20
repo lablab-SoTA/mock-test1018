@@ -5,11 +5,13 @@ All routes live under `app/api/*` and respond with JSON. Query parameters (`star
 ## Revenue
 
 - `GET /api/revenue/summary`
-  - Returns overall revenue KPIs with optional `deltas` when compare mode enabled.
+  - Returns overall revenue KPIs (`payment_rate` now included) with optional `deltas` when compare mode enabled.
 - `GET /api/revenue/breakdown`
   - Product type breakdown (`single`, `subscription`, `tip`).
 - `GET /api/revenue/transactions`
   - Array of transaction rows (used for tables/CSV).
+- `GET /api/revenue/top-payers`
+  - Top 10 paying users with order counts, AOV, and last purchase timestamp.
 
 ## Acquisition & Conversion
 

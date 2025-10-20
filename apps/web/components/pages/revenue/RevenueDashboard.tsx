@@ -7,13 +7,18 @@ import { WidgetShell } from "@/components/common/WidgetShell";
 import { BarChartX } from "@/components/charts/BarChartX";
 import { PieChartX } from "@/components/charts/PieChartX";
 import { KpiCard } from "@/components/kpi/KpiCard";
-import { DataTable } from "@/components/tables/DataTable";
+import { DataTable, type ColumnDefinition } from "@/components/tables/DataTable";
 import { TransactionsTable } from "@/components/tables/TransactionsTable";
 import { useTranslation, type TranslationKey } from "@/lib/hooks/use-translation";
-import { useRevenueBreakdown, useRevenueSummary, useRevenueTransactions } from "@/lib/hooks/use-revenue-data";
+import {
+  useRevenueBreakdown,
+  useRevenueSummary,
+  useRevenueTopPayers,
+  useRevenueTransactions,
+} from "@/lib/hooks/use-revenue-data";
 import { buildRevenueTrend } from "@/lib/utils/revenue";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils/format";
-import type { ProductType, RevenueBreakdownItem, TransactionRow } from "@/lib/types";
+import type { ProductType, RevenueBreakdownItem, TopPayerRow, TransactionRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { buildCsv, downloadCsv, notifyCsvError } from "@/lib/csv";
 import { productLabelKeys } from "@/lib/i18n";
@@ -30,14 +35,16 @@ type Translator = (key: TranslationKey, params?: Record<string, string | number>
 const EMPTY_BREAKDOWN: RevenueBreakdownItem[] = [];
 
 export function RevenueDashboard() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [selectedProduct, setSelectedProduct] = useState<"all" | ProductType>("all");
   const [trendAsTable, setTrendAsTable] = useState(false);
   const [breakdownAsTable, setBreakdownAsTable] = useState(false);
+  const [topPayersAsTable, setTopPayersAsTable] = useState(true);
 
   const summaryQuery = useRevenueSummary();
   const breakdownQuery = useRevenueBreakdown();
   const transactionsQuery = useRevenueTransactions();
+  const topPayersQuery = useRevenueTopPayers();
 
   const trendData = useMemo(() => {
     if (!transactionsQuery.data) return [];
@@ -52,6 +59,41 @@ export function RevenueDashboard() {
   }, [transactionsQuery.data, selectedProduct]);
 
   const breakdownData = breakdownQuery.data?.data ?? EMPTY_BREAKDOWN;
+  const topPayers = topPayersQuery.data?.data ?? [];
+  const localeCode = locale === "ja" ? "ja-JP" : "en-US";
+
+  const topPayerColumns = useMemo<ColumnDefinition<TopPayerRow>[]>(
+    () => [
+      { key: "user_id_hash", header: t("revenue.payers.column.user") },
+      {
+        key: "total_revenue",
+        header: t("revenue.payers.column.total"),
+        align: "right",
+        sortable: true,
+        render: (row) => formatCurrency(row.total_revenue, { decimals: true }),
+      },
+      {
+        key: "orders",
+        header: t("revenue.payers.column.orders"),
+        align: "right",
+        sortable: true,
+        render: (row) => formatNumber(row.orders),
+      },
+      {
+        key: "avg_order_value",
+        header: t("revenue.payers.column.aov"),
+        align: "right",
+        sortable: true,
+        render: (row) => formatCurrency(row.avg_order_value, { decimals: true }),
+      },
+      {
+        key: "last_purchase_utc",
+        header: t("revenue.payers.column.last"),
+        render: (row) => new Date(row.last_purchase_utc).toLocaleString(localeCode),
+      },
+    ],
+    [localeCode, t],
+  );
 
   const pieData = useMemo(
     () =>
@@ -94,6 +136,21 @@ export function RevenueDashboard() {
     }
   };
 
+  const exportTopPayersCsv = () => {
+    try {
+      const csv = buildCsv(topPayers, [
+        { key: "user_id_hash", header: "user_id_hash" },
+        { key: "total_revenue", header: "total_revenue" },
+        { key: "orders", header: "orders" },
+        { key: "avg_order_value", header: "avg_order_value" },
+        { key: "last_purchase_utc", header: "last_purchase_utc" },
+      ]);
+      downloadCsv("top_payers.csv", csv);
+    } catch (error) {
+      notifyCsvError(error);
+    }
+  };
+
   const exportTransactionsCsv = () => {
     try {
       const csv = buildCsv(filteredTransactions, [
@@ -116,11 +173,21 @@ export function RevenueDashboard() {
     }
   };
 
-  if (summaryQuery.isLoading || breakdownQuery.isLoading || transactionsQuery.isLoading) {
+  if (
+    summaryQuery.isLoading ||
+    breakdownQuery.isLoading ||
+    transactionsQuery.isLoading ||
+    topPayersQuery.isLoading
+  ) {
     return <div className="grid gap-4">{t("revenue.loading")}</div>;
   }
 
-  if (summaryQuery.isError || breakdownQuery.isError || transactionsQuery.isError) {
+  if (
+    summaryQuery.isError ||
+    breakdownQuery.isError ||
+    transactionsQuery.isError ||
+    topPayersQuery.isError
+  ) {
     return (
       <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
         {t("revenue.error")}
@@ -137,7 +204,7 @@ export function RevenueDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KpiCard
           label={t("revenue.kpi.gross")}
           value={formatCurrency(summary.gross, { decimals: true })}
@@ -162,6 +229,11 @@ export function RevenueDashboard() {
           helpText={t("revenue.kpi.payingUsers.help")}
         />
         <KpiCard
+          label={t("revenue.kpi.paymentRate")}
+          value={formatPercent(summary.payment_rate)}
+          helpText={t("revenue.kpi.paymentRate.help")}
+        />
+        <KpiCard
           label={t("revenue.kpi.churn")}
           value={formatPercent(summary.churn_rate)}
           delta={summary.retention_rate - 1}
@@ -170,7 +242,63 @@ export function RevenueDashboard() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+      <section>
+        <WidgetShell
+          title={t("revenue.payers.title")}
+          description={t("revenue.payers.description")}
+          actions={
+            <WidgetMenu
+              onDownloadCsv={exportTopPayersCsv}
+              onToggleTable={
+                topPayers.length > 0 ? () => setTopPayersAsTable((prev) => !prev) : undefined
+              }
+            />
+          }
+        >
+          {topPayersAsTable || topPayers.length === 0 ? (
+            <DataTable
+              data={topPayers}
+              columns={topPayerColumns}
+              ariaLabel={t("revenue.payers.tableAria")}
+              pageSize={10}
+            />
+          ) : (
+            <div className="space-y-3 text-sm">
+              {topPayers.map((payer, index) => (
+                <div
+                  key={payer.user_id_hash}
+                  className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {index + 1}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{payer.user_id_hash}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t("revenue.payers.column.last")}:{" "}
+                        {new Date(payer.last_purchase_utc).toLocaleString(localeCode)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <div className="font-semibold">
+                      {formatCurrency(payer.total_revenue, { decimals: true })}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("revenue.payers.column.orders")}: {formatNumber(payer.orders)} ・{" "}
+                      {t("revenue.payers.column.aov")}:{" "}
+                      {formatCurrency(payer.avg_order_value, { decimals: true })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </WidgetShell>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <WidgetShell
           title={t("revenue.trend.title")}
           description={
